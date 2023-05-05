@@ -1,0 +1,119 @@
+# Joshua Lahman
+# CS2300 Programming Assignment #4
+# Part 3
+
+# Computes the dominant eigenvalue and eigenvector of a square matrix using the power method
+def power_method(A, eps, max_iter):
+    """
+    Args:
+        A: a square matrix (2D list)
+        eps: tolerance for convergence
+        max_iter: maximum number of iterations
+    """
+
+    # Generate an initial guess for the eigenvector
+    v = [1 / len(A) for i in range(len(A))]
+
+    # Initialize the eigenvalue and eigenvector
+    lambda_old = 0
+    lambda_new = 1
+    r = v.copy()
+
+    # Power method iteration
+    for k in range(2, max_iter+1):
+        y = []  # Initialize an empty list
+        for i in range(len(A)):
+            s = 0  # Initialize a sum variable
+            for j in range(len(A)):
+                s += A[i][j] * r[j]  # Add the product of A[i][j] and r[j] to the sum variable
+            y.append(s)  # Append the sum to the list y
+        lambda_old = lambda_new
+        lambda_new = y[0]
+        j = max(range(len(y)), key=lambda i: abs(y[i]))
+        if y[j] == 0:
+            print("eigenvalue zero; select new r(1) and restart")
+            return None
+
+        # check if values are within tolerance
+        r = [y[i] / y[j] for i in range(len(y))]
+        if abs(lambda_new - lambda_old) < eps:
+            return lambda_new, r
+
+    print("maximum iterations exceeded.")
+    return None
+
+# DATA INPUT===
+# set file name to variable
+txt = 'input_3.txt'
+
+# open txt file and copy data
+with open(txt, 'r') as f:
+    data = f.readlines()  # read raw lines into an array
+
+# organize data into n-dimension array
+matrix = []
+intCount = 0
+for raw_line in data:
+    split_line = raw_line.strip().split(" ")  # ["1", "0" ... ]
+    # loop to count number of items in matrix
+    for x in split_line:
+        intCount = intCount + 1
+    # format matrix
+    nums_ls = [float(x.replace('"', '')) for x in split_line]
+    matrix.append(nums_ls)
+
+# check for negative values in matrix
+for line in matrix:
+    for element in line:
+        if element < 0:
+            print("matrix contains negative value")
+            print('Invalid input')
+            break
+
+# check that matrix is stochastic
+for i in range(0, len(matrix)):
+    sum = 0
+    for line in matrix:
+        sum += line[i]
+    if abs(sum-1) > 1e-6:
+        print("matrix not stochastic")
+        print('Invalid input')
+
+# use power method to find converging point
+ans = power_method(matrix, 1e-6, 100)
+eigenvector = ans[0]
+if eigenvector is None:
+    print('Failed to converge')
+
+
+formatted_ans = ' '.join(f'{x:.4f}' for x in ans[1])
+print(formatted_ans)
+
+
+# COMPUTATION===
+# set the parameters
+eps = 1e-4
+max_iter = 1000
+eigenvector_indices_ans=[]
+
+# compute the dominant eigenvalue and eigenvector
+result = power_method(matrix, eps, max_iter)
+if result is not None:
+    lambda_val, eigenvector = result
+    # print the eigenvector indices in descending order of values
+    eigenvector_indices = [i for i, x in sorted(enumerate(eigenvector), key=lambda x: x[1], reverse=True)]
+
+    # format indexed so they start at 1 and not 0
+    for line in eigenvector_indices:
+        eigenvector_indices_ans.append(line + 1)
+
+    eigenvector_indices_str = ' '.join(f'{x:.4f}' for x in eigenvector_indices_ans)
+    print(eigenvector_indices_str)
+
+# DATA OUTPUT ===
+# write eigenvector indices to file
+eigenvectorFile = open("Part3_eigenvector_indices_jlahman", "w")
+
+eigenvectorFile.writelines(formatted_ans + "\n")
+eigenvectorFile.writelines(eigenvector_indices_str + "\n")
+
